@@ -6,23 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 
 interface FuckOffMessage {
-  id: number;
+  id: string;
   name: string;
   photo?: string;
   curse: string;
   timestamp: Date;
 }
 
+const generateUniqueId = () => {
+  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+};
+
 const Index = () => {
   const [messages, setMessages] = useState<FuckOffMessage[]>([
     {
-      id: 1,
+      id: "abc123def",
       name: "Анонимус",
       curse: "Иди нахуй со своими тупыми вопросами!",
       timestamp: new Date(Date.now() - 1000 * 60 * 30)
     },
     {
-      id: 2,
+      id: "xyz789ghi",
       name: "Злой Петя",
       curse: "Отвали со своей хернёй, заебал уже!",
       timestamp: new Date(Date.now() - 1000 * 60 * 60)
@@ -36,12 +40,15 @@ const Index = () => {
   });
   
   const [counter, setCounter] = useState(1337);
+  const [generatedLink, setGeneratedLink] = useState<string>('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.name && formData.curse) {
+      const messageId = generateUniqueId();
       const newMessage: FuckOffMessage = {
-        id: Date.now(),
+        id: messageId,
         name: formData.name,
         photo: formData.photo,
         curse: formData.curse,
@@ -49,7 +56,22 @@ const Index = () => {
       };
       setMessages([newMessage, ...messages]);
       setCounter(prev => prev + 1);
+      
+      // Генерируем ссылку
+      const link = `${window.location.origin}/message/${messageId}`;
+      setGeneratedLink(link);
+      setShowSuccess(true);
+      
       setFormData({ name: '', photo: '', curse: '' });
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedLink);
+      alert('Ссылка скопирована! Теперь можете отправить её тому, кого хотите послать нахуй!');
+    } catch (err) {
+      console.error('Ошибка копирования:', err);
     }
   };
 
@@ -140,6 +162,45 @@ const Index = () => {
             </form>
           </CardContent>
         </Card>
+        
+        {/* Success Message with Generated Link */}
+        {showSuccess && (
+          <Card className="mt-6 bg-gradient-to-br from-electric-yellow to-electric-pink p-1 animate-pulse-intense">
+            <CardContent className="bg-pure-black m-1 rounded p-6">
+              <div className="text-center">
+                <h3 className="font-impact text-2xl text-electric-yellow mb-4">
+                  <Icon name="CheckCircle" className="inline mr-2" size={28} />
+                  ПОСЛАНИЕ СОЗДАНО!
+                </h3>
+                <p className="text-pure-white mb-4">Отправьте эту ссылку тому, кого хотите послать нахуй:</p>
+                
+                <div className="bg-electric-pink/20 p-4 rounded-lg mb-4">
+                  <p className="text-electric-yellow font-mono text-sm break-all">
+                    {generatedLink}
+                  </p>
+                </div>
+                
+                <div className="flex gap-4 justify-center">
+                  <Button 
+                    onClick={copyToClipboard}
+                    className="bg-electric-yellow text-pure-black font-bold hover:bg-electric-yellow/80"
+                  >
+                    <Icon name="Copy" className="mr-2" size={20} />
+                    КОПИРОВАТЬ ССЫЛКУ
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setShowSuccess(false)}
+                    variant="outline"
+                    className="border-electric-pink text-electric-pink hover:bg-electric-pink/20"
+                  >
+                    ЗАКРЫТЬ
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Messages Gallery */}
